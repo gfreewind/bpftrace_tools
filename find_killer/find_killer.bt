@@ -1,0 +1,5 @@
+#!/usr/bin/bpftrace
+
+tracepoint:syscalls:sys_enter_kill { if ($1 == args->pid) {  printf("process %s send signal%d to pid %d\n", comm,
+                                            args->sig, args->pid);  }}
+
