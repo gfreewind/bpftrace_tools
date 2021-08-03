@@ -2,6 +2,8 @@
 
 #include <linux/socket.h>
 #include <net/sock.h>
+#include <net/inet_sock.h>
+
 
 BEGIN {
 	printf("Tracing udp_sendmsg. Hit Ctrl-C to end.\n");
@@ -24,15 +26,20 @@ kprobe:udp_sendmsg {
 }
 
 kprobe:udp_send_skb* {
+	$skb = ((struct sk_buff*)arg0);
 	$flow4 = ((struct flowi4*)arg1);
+
+	$inet_sk = ((struct inet_sock *)($skb->sk));
 
 	$saddr = ntop($flow4->saddr);
 	$daddr = ntop($flow4->daddr);
+	$lport = $inet_sk->inet_sport;
+	$dport = $flow4->fl4_dport;
 	
 	time("%H:%M:%S ");
         printf("%-32s ", "udp_send_skb");
         printf("%-8d %-16s ", pid, comm);
-        printf("%-16s %-6s %-16s %-6s\n", $saddr, "null", $daddr, "null");
+        printf("%-16s %-6d %-16s %-6d\n", $saddr, $lport, $daddr, $dport);
 
 }
 
